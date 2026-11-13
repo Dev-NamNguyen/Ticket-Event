@@ -1,0 +1,42 @@
+
+name: Telegram Pull Request Notification
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - closed
+      - review_requested
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send Telegram Notification
+        env:
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_USER: ${{ github.event.pull_request.user.login }}
+          PR_ACTION: ${{ github.event.action }}
+          REPO: ${{ github.repository }}
+          MERGED: ${{ github.event.pull_request.merged }}
+        run: |
+          MESSAGE="🔔 GitHub Pull Request Notification
+
+          Repository: ${REPO}
+          Title: ${PR_TITLE}
+          Author: ${PR_USER}
+          Action: ${PR_ACTION}
+          Merged: ${MERGED}
+
+          Link: ${PR_URL}"
+
+          curl -sS -X POST \
+            "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
+            -d "chat_id=${CHAT_ID}" \
+            --data-urlencode "text=${MESSAGE}"
